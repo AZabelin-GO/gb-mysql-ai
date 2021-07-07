@@ -1,0 +1,48 @@
+Проанализировать структуру БД vk, которую мы создали на занятии, и внести предложения по усовершенствованию
+(если такие идеи есть). Напишите пожалуйста, всё-ли понятно по структуре.
+>>>
+Не совсем понял почему в таблице post 2 раза используется id (id & post_id), причем друг на друга ссылаются
+Так же не понял зачем разделять сущность пользователя на 2 таблицы: profile и user
+------------------------------------------------------------------------------------------------------------------------
+
+Добавить необходимую таблицу/таблицы для того, чтобы можно было использовать лайки для медиафайлов, постов и пользователей.
+>>>
+CREATE TABLE IF NOT EXISTS `like_user` (
+  `to_user_id` INT UNSIGNED NOT NULL,
+  `from_user_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`to_user_id`, `from_user_id`),
+  KEY `to_user_idx` (`to_user_id`),
+  KEY `from_user_idx` (`from_user_id`),
+  CONSTRAINT `fk_like_has_to_user` FOREIGN KEY (`to_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_like_has_from_user1` FOREIGN KEY (`from_user_id`) REFERENCES `user` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `like_post` (
+  `to_post_id` INT UNSIGNED NOT NULL,
+  `from_user_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`to_post_id`, `from_user_id`),
+  KEY `to_post_idx` (`to_post_id`),
+  KEY `from_user_idx` (`from_user_id`),
+  CONSTRAINT `fk_like_has_to_post` FOREIGN KEY (`to_post_id`) REFERENCES `post` (`id`),
+  CONSTRAINT `fk_like_has_from_user2` FOREIGN KEY (`from_user_id`) REFERENCES `user` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `like_media` (
+  `to_media_id` INT UNSIGNED NOT NULL,
+  `from_user_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`to_media_id`, `from_user_id`),
+  KEY `to_media_idx` (`to_media_id`),
+  KEY `from_user_idx` (`from_user_id`),
+  CONSTRAINT `fk_like_has_to_media` FOREIGN KEY (`to_media_id`) REFERENCES `media` (`id`),
+  CONSTRAINT `fk_like_has_from_user3` FOREIGN KEY (`from_user_id`) REFERENCES `user` (`id`)
+);
+------------------------------------------------------------------------------------------------------------------------
+
+Используя сервис http://filldb.info или другой по вашему желанию, сгенерировать тестовые данные для всех таблиц,
+учитывая логику связей. Для всех таблиц, где это имеет смысл, создать не менее 100 строк.Создать локально БД vk и
+загрузить в неё тестовые данные.
+>>>
+Не могу сгененрировать данные через сайт, базу VK задампил, таблицы подредактировал, чтобы сайт нормально парсил, но
+генерации данных не проихсодит - таблицы user, media_type без проблем заполняет, но на других таблица пишет 'OK' сообщение,
+а данных нет. (sql файл для сайта в каталоге scripts/lesson3filldb.sql)
+------------------------------------------------------------------------------------------------------------------------
