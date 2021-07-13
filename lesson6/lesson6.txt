@@ -1,12 +1,96 @@
 *Практическое задание по теме “Операторы, фильтрация, сортировка и ограничение. Агрегация данных”*
+
 1) Работаем с БД vk и тестовыми данными, которые вы сгенерировали ранее:
 Проанализировать запросы, которые выполнялись на занятии, определить возможные корректировки и/или улучшения (JOIN пока не применять).
+---
 
 2) Пусть задан некоторый пользователь.
 Из всех друзей этого пользователя найдите человека, который больше всех общался с нашим пользователем.
+---
+select
+    from_user_id
+from
+    (select count(*) as count, from_user_id, to_user_id from message where to_user_id = 21 group by from_user_id) as tmp
+where
+    count = (select max(count));
+---
 
 3) Подсчитать общее количество лайков, которые получили 10 самых молодых пользователей.
+---
+select
+    *
+from
+    `like`
+where
+    user_id in (select
+                    *
+                from
+                    (select
+                        user_id
+                    from
+                        profile
+                    order
+                        by YEAR(NOW()) - YEAR(birthday) ASC
+                    limit 10)
+                as tmp)
+---
 
 4) Определить кто больше поставил лайков (всего) - мужчины или женщины?
+---
+# Don't know how to do it without join statement
+
+select
+    gender,
+    count(*) as count
+from
+    `like`
+    join
+        profile
+    on
+        (`like`.id = profile.user_id)
+group by
+    gender
+order by
+    count desc
+limit 1;
+---
 
 5) Найти 10 пользователей, которые проявляют наименьшую активность в использовании социальной сети.
+---
+# Find tle lowest activity per user. Activity = sum (user_like + user_post + user_message)
+
+select
+	user_id,
+    sum(count) as activity
+from
+	(select
+		message.from_user_id as user_id,
+        count(*) as count
+	from
+    message
+    group by
+		from_user_id
+	union all
+	select
+		post.user_id as user_id,
+        count(*) as count
+	from
+		post
+	group by
+		user_id
+	union all
+	select
+		`like`.id as user_id,
+        count(*) as count
+	from
+		`like`
+	group by
+		id)
+as tmp
+group by
+	user_id
+order by
+	activity asc,
+    user_id asc
+limit 10;
+---
