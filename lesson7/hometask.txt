@@ -1,9 +1,42 @@
 *Тема “Сложные запросы”*
 
 1) Составьте список пользователей users, которые осуществили хотя бы один заказ orders в интернет магазине.
+---
+select * from orders join users on user_id = users.id;
+---
 
 2) Выведите список товаров products и разделов catalogs, который соответствует товару.
+---
+select
+	*
+from
+	products as p
+join
+	catalogs as c
+on
+	p.catalog_id = c.id;
+---
 
 3) (по желанию) Пусть имеется таблица рейсов flights (id, from, to) и таблица городов cities (label, name). Поля from,
 to и label содержат английские названия городов, поле name — русское. Выведите список рейсов flights с русскими
 названиями городов.
+# Fields f.from and f.to are left in this SQL query to for fast testing when examining this exercise
+---
+select
+	f.id,
+    f.from,
+	c1.name as from_rus,
+    f.to,
+    c2.name as to_rus
+from
+	fligths as f
+join
+	cities as c1
+on
+	c1.label = f.from
+join
+	cities as c2
+on
+	c2.label = f.to
+order by f.id;
+---
