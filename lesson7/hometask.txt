@@ -2,7 +2,7 @@
 
 1) Составьте список пользователей users, которые осуществили хотя бы один заказ orders в интернет магазине.
 ---
-select * from orders join users on user_id = users.id;
+select * from orders join users on orders.user_id = users.id;
 ---
 
 2) Выведите список товаров products и разделов catalogs, который соответствует товару.
@@ -20,7 +20,7 @@ on
 3) (по желанию) Пусть имеется таблица рейсов flights (id, from, to) и таблица городов cities (label, name). Поля from,
 to и label содержат английские названия городов, поле name — русское. Выведите список рейсов flights с русскими
 названиями городов.
-# Fields f.from and f.to are left in this SQL query to for fast testing when examining this exercise
+# Fields f.from and f.to are left in this SQL query for fast copy-paste testing when examining this exercise
 ---
 select
 	f.id,
