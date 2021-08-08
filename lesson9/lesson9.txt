@@ -2,39 +2,175 @@
 
 1) базе данных shop и sample присутствуют одни и те же таблицы, учебной базы данных. Переместите запись id = 1 из
 таблицы shop.users в таблицу sample.users. Используйте транзакции.
+--- (if tables has different order or amount of columns symbol '* should not be used' )
+start transaction;
+insert into
+	sample.users
+(
+	select
+		*
+	from
+		shop.users as s_u
+	where
+		s_u.id = 1
+);
+
+delete from
+	shop.users as s_u
+where
+	s_u.id = 1;
+commit;
+---
 
 2) Создайте представление, которое выводит название name товарной позиции из таблицы products и соответствующее
 название каталога name из таблицы catalogs.
+---
+create view
+	products_catalog
+as
+	select
+		p.name as p_name, c.name as c_name
+	from
+		products as p
+	join
+		catalogs as c
+	on
+		p.catalog_id = c.id;
+---
 
-3) по желанию) Пусть имеется таблица с календарным полем created_at. В ней размещены разряженые календарные записи за
+3) (по желанию) Пусть имеется таблица с календарным полем created_at. В ней размещены разряженые календарные записи за
 август 2018 года '2018-08-01', '2016-08-04', '2018-08-16' и 2018-08-17. Составьте запрос, который выводит полный список
 дат за август, выставляя в соседнем поле значение 1, если дата присутствует в исходном таблице и 0, если она отсутствует.
+---
+skipped
+---
 
 4) (по желанию) Пусть имеется любая таблица с календарным полем created_at. Создайте запрос, который удаляет устаревшие
 записи из таблицы, оставляя только 5 самых свежих записей.
+---
+start transaction;
+
+drop table if exists products_last5;
+create temporary table products_last5 like products;
+
+insert into
+	products_last5
+(
+	select
+		*
+	from
+		products as p
+	order by
+		created_at desc
+	limit 5
+);
+
+delete from
+	products;
+
+insert into
+	products
+(
+	select
+		*
+	from
+		products_last5
+);
+
+commit;
+---
 
 
 *Практическое задание по теме “Администрирование MySQL” (эта тема изучается по вашему желанию)*
 
 1) Создайте двух пользователей которые имеют доступ к базе данных shop. Первому пользователю shop_read должны быть
 доступны только запросы на чтение данных, второму пользователю shop — любые операции в пределах базы данных shop.
+---
+create user 'shop_read'@'%' identified by 'pa$$w0rd';
+grant select on shop.* to 'shop_read'@'%';
+create user 'shop'@'%' identified by 'pa$$w0rd123qwe';
+grant all on shop.* to 'shop'@'%';
+---
 
 2) (по желанию) Пусть имеется таблица accounts содержащая три столбца id, name, password, содержащие первичный ключ,
 имя пользователя и его пароль. Создайте представление username таблицы accounts, предоставляющий доступ к столбца id и
 name. Создайте пользователя user_read, который бы не имел доступа к таблице accounts, однако, мог бы извлекать записи
 из представления username.
+---
+create user 'user_read'@'%' identified by '123qwe*';
+
+revoke all on *.* from 'user_read'@'%';
+
+create view
+    shop.r_products as select
+        p.name as p_name, c.name as c_name
+    from
+        products as p
+    join
+        catalogs as c
+    on
+        p.catalog_id = c.id;
+
+grant select on shop.r_products to 'user_read'@'%';
+---
 
 *Практическое задание по теме “Хранимые процедуры и функции, триггеры"*
 
 1) Создайте хранимую функцию hello(), которая будет возвращать приветствие, в зависимости от текущего времени суток.
 С 6:00 до 12:00 функция должна возвращать фразу "Доброе утро", с 12:00 до 18:00 функция должна возвращать фразу
 "Добрый день", с 18:00 до 00:00 — "Добрый вечер", с 00:00 до 6:00 — "Доброй ночи".
+---
+DELIMITER //
+
+drop function if exists hello//
+
+create function
+	hello ()
+returns varchar(255) DETERMINISTIC
+begin
+	declare msg varchar(255) default 'error';
+    if current_time() >= '06:00:00' and current_time() < '12:00:00' then
+		set msg = 'Доброе утро!';
+    elseif current_time() >= '12:00:00' and current_time() < '18:00:00' then
+		set msg = 'Добрый день!';
+	elseif current_time() >= '18:00:00' and current_time() < '00:00:00' then
+		set msg = 'Добрый вечер!';
+	elseif current_time() >= '00:00:00' and current_time() < '06:00:00' then
+		set msg = 'Доброй ночи!';
+	end if;
+    return msg;
+end//
+
+select hello();
+---
 
 2) В таблице products есть два текстовых поля: name с названием товара и description с его описанием. Допустимо
 присутствие обоих полей или одно из них. Ситуация, когда оба поля принимают неопределенное значение NULL неприемлема.
 Используя триггеры, добейтесь того, чтобы одно из этих полей или оба поля были заполнены. При попытке присвоить полям
 NULL-значение необходимо отменить операцию.
+---
+drop trigger if exists products_remove_null//
+
+create trigger
+	products_remove_null
+before insert on
+	products
+for each row
+begin
+	if new.name is null or new.description is null then
+		signal sqlstate '45000'
+			set message_text = 'Insertions with null is not allowed';
+	end if;
+    if new.name = '' or new.description = '' then
+		signal sqlstate '45000'
+			set message_text = 'Empty values are not allowed';
+	end if;
+end//
+---
 
 3) (по желанию) Напишите хранимую функцию для вычисления произвольного числа Фибоначчи. Числами Фибоначчи называется
 последовательность в которой число равно сумме двух предыдущих чисел. Вызов функции FIBONACCI(10) должен возвращать
 число 55.
+---
+skipped
+---
