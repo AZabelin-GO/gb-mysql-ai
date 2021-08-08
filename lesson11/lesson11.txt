@@ -1,8 +1,76 @@
 *Практическое задание по теме “Оптимизация запросов”*
 1) Создайте таблицу logs типа Archive. Пусть при каждом создании записи в таблицах users, catalogs и products в таблицу
 logs помещается время и дата создания записи, название таблицы, идентификатор первичного ключа и содержимое поля name.
+---
+delimiter //
+
+drop table if exists logs//
+
+create table logs (
+    id bigint unsigned not null unique auto_increment,
+    table_name varchar(255),
+    pk_id int,
+    created_at date,
+    primary key (`id`)
+)//
+
+drop trigger if exists log_users//
+create trigger
+	log_users
+after insert on
+	users
+for each row
+begin
+	insert into
+		logs(table_name, pk_id, created_at)
+	values
+		('users', new.id, now());
+end//
+
+drop trigger if exists log_catalogs//
+create trigger
+	log_catalogs
+after insert on
+	catalogs
+for each row
+begin
+	insert into
+		logs(table_name, pk_id, created_at)
+	values
+		('catalogs', new.id, now());
+end//
+
+drop trigger if exists log_products//
+create trigger
+	log_products
+after insert on
+	products
+for each row
+begin
+	insert into
+		logs(table_name, pk_id, created_at)
+	values
+		('products', new.id, now());
+end//
+
+show triggers//
+---
 
 2)(по желанию) Создайте SQL-запрос, который помещает в таблицу users миллион записей.
+---
+drop procedure if exists gen_users//
+create procedure gen_users(in count int)
+begin
+	declare i int default 0;
+    while i < count do
+		insert into
+			users(name, birthday_at)
+		values
+			(substring(MD5(RAND()),1,10), now());
+		set i = i + 1;
+	end while;
+end//
+---
 
 *Практическое задание по теме “NoSQL”*
 
