@@ -94,7 +94,7 @@ get azabelin@mail.mail
 3) Организуйте хранение категорий и товарных позиций учебной базы данных shop в СУБД MongoDB.
 ---
 db={
-  "catalogs": [
+  "category": [
     {
       "name": "Процессоры",
       "products": [
